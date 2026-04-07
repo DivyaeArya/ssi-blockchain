@@ -1,0 +1,53 @@
+curl -X POST http://localhost:3001/revoke \
+-H 'Content-Type: application/json' \
+-d '{ "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854" }' | jq .
+
+
+
+curl -X DELETE http://localhost:5000/api/v1/subscriptions/b033ef47-060e-4f7a-91e3-1d978f2e1f44 | jq
+
+
+
+# tests that webhook and verification works also shows tamper detection works
+curl -X POST http://localhost:3003/receive-batch \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "batchId": "manual-test-001",
+    "verifierId": "verifier-door-1",
+    "merkleRoot": "1124f38c22c7c742171026db3a3b247dd3db7826b0fb45a014a61507cd958131",
+    "logs": [
+      {
+        "logId": "log-001",
+        "timestamp": "2026-04-07T00:00:00Z",
+        "resourceId": "library-door-1",
+        "result": "GRANTED",
+        "encryptedIdentity": "base64-blob-placeholder"
+      }
+    ]
+  }' | jq
+  
+  
+  
+  
+  node wallet.js request harry student 1
+
+  node wallet.js prove <credential_id> <resource_id>
+  node wallet.js prove <> library-door-1
+
+  # This is a direct API call to the Issuer Service
+curl -X POST http://localhost:3001/revoke \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "credentialId": "<PASTE_CREDENTIAL_ID_HERE>"
+  }' | jq
+  
+  
+  -----------------------
+  Steps:
+  
+  1. ff deploy ... chaincode
+  2. register interface using schema
+  3. register verifier, issuer and centre
+  4. register webhook
+  5. paste 5000 and 5001 interface IDs in respective envss
+  5. create resource policy

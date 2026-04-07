@@ -1,0 +1,263 @@
+{
+  "credentials": [
+    {
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "issuerId": "issuer-org1",
+      "userId": "alice",
+      "role": "student",
+      "level": 1,
+      "encryptedIdentity": "sM2SS/8bFBnPUSoE8p7yNPwk0rtupgFv9Adfi1XKhC4/vSk3mP+4f+r0jBneicLK+1wEOEzO3L+bjp57OILD5Cq0JE7cLKLJjxhLwm1sHquhMCKskYO/w5LAjcoowz2h5zaehL6VGy26tuD8KPPxdbaRMp6Kj3Kmwkg6EqhWAivPu4AMIXv4ZKl7DRhlh4tD1i1PiVj6l6VRVDe4mO5dslssihmmeg2cYFx0JMS7HpO8z+kbpfoX7M27yi2wf9nMPufynRiItrWXfqUaJ6iV4qc7EfTRBpWLF22iU3O5c0j0I1lR5LxJTTsqysb3laHuSqH0rE6xiMNcnQt1Ea6YPQ==",
+      "issuedAt": "2026-04-02T11:41:31.346Z",
+      "issuerSignature": "vTQBofzck0qxWF04Wqgol83CC2jX9tZmsIZOHFotvSDSAPOR3+BU17FipEJCI64qsAeNogQWqCzLZcMO0QUvvIlVtVThuSMozV3zi/Q1RQGp6IaauSUVA+DKbSJP/kAcZS1Hn0m6yIDbYERv1ss2/TlqLCWPb9aQxtqsN2DEUdV7trW8EZdpzEusi1hr0n2KQXNx6B6xaXUoTQzwLTADc51HjDZwRy6Liq1QurVr4/GxxWEo8iONKyYYZkfk35P9RdNCJ/llcbOykKrPb9tUjwoNWdOkIbd9ISvH00kju8WD+344Sx5zzWdasjxPPzSUvFMExswfPsEzquTICkXbNw==",
+      "walletPrivateKey": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg6n3VgRlkfFx+44wh\nDJs/PpYvRGOvPMIyDfcKaKMLEByhRANCAATfG/DOYRpHh9WU3v0dB3Kh0QPWbylK\nIteip+xTEv7nz1eYuW4wGOMCK63bU65A5YRCxRg7p7ZuqRUj9Mq7hsxQ\n-----END PRIVATE KEY-----\n",
+      "walletPublicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3xvwzmEaR4fVlN79HQdyodED1m8p\nSiLXoqfsUxL+589XmLluMBjjAiut21OuQOWEQsUYO6e2bqkVI/TKu4bMUA==\n-----END PUBLIC KEY-----\n"
+    },
+    {
+      "credentialId": "ee4a78bf-ef4a-4795-b13c-a27ca1cd4837",
+      "issuerId": "org_0e95ec",
+      "userId": "alice",
+      "role": "student",
+      "level": 1,
+      "encryptedIdentity": "u9OSTpR+FeItOjVqyksRYnXb4VHrhK4CYUpRgp3uXWeUDtYC3LbOjU2KbYQParjpwKMVO7AWXplAEn5c+BC4ZB3Xm8FxS3V53ROngNJJc7NYkRli6rAJdAeVFt8VT29CTsDlYdUSkAuW58TgakUpJ+3xkPKo9QvMHP5YIMnamlhWQaHS06OQwHupIExgyVgZ5CAFbFM6t/B7vpDIGmXjgHZgZl/TqOhQvlXty0A+ynXN7JwpIqWfqBOhvqJCOR4/vjp/fflyLASq6VCoOtTumEhDbCaFKZcd3Ev01kz/SyPm7Yb114ygzy7zVjv7GFhsdUFc3s56yp8hUI8Cf1wosg==",
+      "issuedAt": "2026-04-06T17:29:52.818Z",
+      "issuerSignature": "OTVGpFbCYqss5EdMbuO4h90YQe89DURbzbzdg3q3kOAMeInjGJBlNPe/VhDrKnnb8I6uIM4Y1ZsjP8zpQjmZHctcIJHdTGSnNZ5Sh00zOS5IrsnmHJeGARt7Q+v8TIvaMZa/3A7SPrT2YEAlRKDbzApcjM86meAQN57fIPsJ052m6xqnQpWNxwIrHhmTxPE8gF4ncZP+caGDIetaGYXQXCoKw/pe6vyG4Rgj5qWfrkjZW+iBNkYc8mOgPzjR3LX9jS27spf8dQ+dp2IblVUmDHEmDY1TufxLepbqnM2d0BLOR7Y3Wcifgr94i1OGAKzeZMz45iEiJFHN4Y6MBuGSDQ==",
+      "walletPrivateKey": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgc0boIaHzlMpL/0S1\nHFRqSHtUdP694ouQoDsjn3GGjGShRANCAARWid7g9EUfg8rUJYRx9PsZAu9lVBHD\n2qC55CGhCjxVsDvYETNqkfWTtM+i4qn/Pwo7O/0czwjtJJw6jhCnFX35\n-----END PRIVATE KEY-----\n",
+      "walletPublicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVone4PRFH4PK1CWEcfT7GQLvZVQR\nw9qgueQhoQo8VbA72BEzapH1k7TPouKp/z8KOzv9HM8I7SScOo4QpxV9+Q==\n-----END PUBLIC KEY-----\n"
+    },
+    {
+      "credentialId": "a9a053f6-8193-4bb6-8721-b426cb4bd5ab",
+      "issuerId": "org_0e95ec",
+      "userId": "joe",
+      "role": "student",
+      "level": 1,
+      "encryptedIdentity": "KsbbfrnhCvPiivWz/VZCG9xITV6QOzRdD5xWTjIVKxDFtZnlOKHAS4/r5uhPGPIsxT2RasTV4aOEYfIS1xt3PHMBM1Fuh8TBpUn0UGSQLjEWMSn2ZFNfUbHq+5zeOtz2JHc1+oGvozB0RdtOOmdWyi9/yHoYpSia79kCfFfgJpebFujSo5pjpWJ26OVoFH3I19TdSYY8Rrrawlinl+liilGGamIbjz9fKrBGXzAD7EBZ4Q2Mfmzq41WKmS+M+TJFBvRSJfFFgeJ3lM+3qXRmapsnCib3/xkRfyhKPK/JKktTY/QfZdMnZlmYON8TSI2m9bONWgYSfl101xvhbXAk5A==",
+      "issuedAt": "2026-04-06T18:07:53.298Z",
+      "issuerSignature": "F89LZeoe9IEUF03zY2EAJQXN07Jh3Cy8Bp1Ws55RIixoEEWn8jGqopSK1BE2Xft82Vb2kiaLIz3dA3IUDCTx/skN/WcUC7XVhe+KKI0DhI45uAzssXl/MqKlKyH6IWx7soBwnJJ9u9sEeTrPZrQtSkiCDuvz1fJXiFDFWmCaGFf5NUIox99nUNa46FIl21AnYTXNz9vSi8f/hqjeUwlmldBhaTO5q+RILOEUSdsPbZC+i7KOv0CIWJqeLg+jRY+Zv7pn15OEKyBcdQbIfVjlv8m+SGdR7owtMSjrChRZWTjhw0BzQbk0cevs6c7N0WsJHPstMS5ebddF4a82DRSAAw==",
+      "walletPrivateKey": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgcUMAF147YBGlBJ4m\nA36hFqfSmnSUGreU0Z14ZY9SceKhRANCAASwR2v9Sffmc1nvF2buGQscBxK//sIg\nnn1dcxkw38ZR35zul98MFqMNic5zJcU6Lt6ZvCZOH6JUVe2kiaWuF2ZN\n-----END PRIVATE KEY-----\n",
+      "walletPublicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEsEdr/Un35nNZ7xdm7hkLHAcSv/7C\nIJ59XXMZMN/GUd+c7pffDBajDYnOcyXFOi7embwmTh+iVFXtpImlrhdmTQ==\n-----END PUBLIC KEY-----\n"
+    },
+    {
+      "credentialId": "87883062-c6bb-4597-bac8-eaf95ff5dec1",
+      "issuerId": "org_0e95ec",
+      "userId": "harry",
+      "role": "student",
+      "level": 1,
+      "encryptedIdentity": "ZrDZBwLXfqu7BdsuY3L/gzXIOfqW6iBbqoU3FhPQEimL1lJVeepg5X9HlPfzbnk/ds0fvfuvW2Cw8/KgZTZaaabeKmwWi6eFPWQ4Os9nLnaIETjlhmrN68XV+PLfcSuJ9Xintz+keMD/iG7Pq27rw97zzbGUgXo8ADII3agq/0A4muDeBKktRBOwoS/uYbKK09YwJlfcCzFSwSGzyc01bNAcnd6qFLEPUexmaXeRTre2Q83bmDCz7hPVFPmoDGf4idpnZ0pFIW/c/iP/L4yb00bBwX6BUFf+NCqDCqPusFBQcMvdiDpZcBuWDcawJR0gwsjAYmA1ReyBZ6myDW+Jtg==",
+      "issuedAt": "2026-04-07T08:51:57.692Z",
+      "issuerSignature": "ChME7ciWzARWCMv3LCS5M3fxNIwWH/AU89bUVDFhYDJ/QqZTnCDMxA0EvHCLFDC3QdWIwgFZyMg20qS1CeLNg8bQJyZ8eI0FEREBBxPlXsF31qERzF5qACbasBsrGBWF7Gi8pVoukcWTul6MPL33AjyUm+ls+epzSPIDG2XBhkK1NPuTUIU+sIKpWG0IIgVvk3gdKNQmbivpRAe7IQuXJoqurut1toEH0HPx4qNFMIMxHAvnZfDRwkxMYh6VaVANss7xbzolyJccbjzBdtdxu2+h1UyZR3YWaMPwHOHp64qWAamu4EQ0yju+JmgpF6OXWlRGYxkPhewgNxddx9PfcA==",
+      "walletPrivateKey": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg4w0E3a5UAUsEPztR\nc+qC2b73DTgBfCmmNG2VSYWZCeChRANCAAQaeIHuqhtnoY3ecjLSTc1gukECECII\nmz/h8ipMuUDWfHQA9Ozu32FNS5cPg4JX03JtBtHJovUM52sr/9njOK5U\n-----END PRIVATE KEY-----\n",
+      "walletPublicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEGniB7qobZ6GN3nIy0k3NYLpBAhAi\nCJs/4fIqTLlA1nx0APTs7t9hTUuXD4OCV9NybQbRyaL1DOdrK//Z4ziuVA==\n-----END PUBLIC KEY-----\n"
+    }
+  ],
+  "receipts": [
+    {
+      "receiptId": "742b6674-6dc3-41d9-8dd7-65eb7495e0f9",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUyAGEps5KD124lOIRcoI3tyg9UGw\ndyAZcYO1LtMEiiXEOydl8ttj2IHAnQxfRxvC7solWiCDT89MY9e7RC5+/w==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Request failed with status code 400",
+      "timestamp": "2026-04-02T11:43:12.924Z",
+      "verifierSignature": "MEUCIQCojVltSZrMPrRgVaAKVi0yajM1UPRK0BegAB33xc9IKAIgWQvwBlIJtQ7R1MqE9vUHp8exTciTDQV+X7ggDAy+zRQ="
+    },
+    {
+      "receiptId": "46996993-32f8-4864-a40b-63196d5dbb3e",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbPBxdVYc/jrrq+6c4wWn7wYL9sOV\nfptty5tkOcWyY67kqsGSjn6fjnNM/FS47D/MZ9Ae3FVajbtXKV1hoZc4mg==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-02T13:32:19.498Z",
+      "verifierSignature": "MEYCIQDhQKmY2xfo7iMeDfmk51EQ04nfnW/LDli+w1GHMuxtIwIhAOy9DeK5B63GKmRa45gQmuGj+uUrXtmgb06U2tE1Sked"
+    },
+    {
+      "receiptId": "05b99516-baf7-4e01-9ee0-dd3e16d48a25",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEpRmhCBWEc3ge8u4UmO4hjpWSlIFD\nRK9/iChrnXUdxbm/WP3L25qH1YO9So8AgSat1jrn10FdSL8lNBfv/XykEw==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-02T13:36:11.633Z",
+      "verifierSignature": "MEUCIHGQtUivIkrCHx2RDvc+HJLBONFhdcbrdniigTnCFBE3AiEAk0xLv2RNc/0Jti40N/8H+VUnI5a6LvmYYPlVPEOUD6w="
+    },
+    {
+      "receiptId": "f1303c35-b7bd-4ae8-934f-a8a47c35ec6b",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE50cdJ5pt7FTs9hBxpHLIEf2AirV0\n9vK3ok0ZrOHymS2OEy3xGtCL2gHF5+n1fZjyt9krunB5EZqDF5L8Wz5TxQ==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-02T13:55:18.115Z",
+      "verifierSignature": "MEQCIDEF5Mj+WhOWx3yDniHyPyRnHhv7Ch5ahebCDBIQr8X+AiBs4SWMkMDKACGhbpvUdbosIDISwGThaBXX1p2gfEGKcw=="
+    },
+    {
+      "receiptId": "0887d60d-be15-43c1-877e-b7d4e6bb9640",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZcLXtjUvXVvSdwqH9GJxK9iP9qLd\npjq1ZbbR/lmga5XcRb9A4wdHFmFkqb7MZU/lEV5fQw4nyIgVyNNgxc2llQ==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-02T14:19:14.755Z",
+      "verifierSignature": "MEYCIQC/wlIMf0+1j15yXJhHmv/esVpO+uorwfJjA964DV2ePAIhAIeyBZa8gJnok6m1yiIPnCuNCce2Hs3VqCM+ktTacuDB"
+    },
+    {
+      "receiptId": "ff5ee68b-0e41-42aa-8966-06cafd1fc45c",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhlla+u9gWFxuF1SWF9sH60bg995c\nis+k2SK/YxUiE/ZbDR/TuPtcV7wo30dvi6B0c/A2UkQLT3lP+y45P7V92Q==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T16:48:58.597Z",
+      "verifierSignature": "MEUCIQD4yyxrpoQmvTUK+au06FVAmWDHwq0pxs0mVLhUxdXIvgIgFYw6r0NKeUmI3ULw7Tq5ZJ9S1YpGTAUsk45HJJVOH8s="
+    },
+    {
+      "receiptId": "1a5f6317-b20d-473d-9c32-b8355552849f",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2Xo4qbN+0bLV0ICaCK+5kph3wOPd\nvHJV6LqThVSMPuF5tpv8wjxSgOUIwsZtwAFDeYOtfic4+GYADO54kw/xYA==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:20:00.749Z",
+      "verifierSignature": "MEQCIHRAWOay5H4pFjA1dXk0A/rA7aEjCdliKIeex4/rjdITAiAKsYA7cNbej1U4Cv7o9XIyJHcAZ27U/As+aAxid2oGHw=="
+    },
+    {
+      "receiptId": "e2c984c4-5168-4ec4-9269-b9b459115e3f",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEpMUeJl3ybW2tcR98hHewWX6O8zqj\nwQbePKJ0e6ze3AF1kY2uR1FEyijh4xpWJ5qOVjvCpd4qQuHTzvR9Crhciw==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:25:08.629Z",
+      "verifierSignature": "MEUCIAv2RxSRvLiQzTuq37LwV9cKso6f3TdizJ520DXdGoy0AiEAvpauSbPaLs48u6gaUnvqKiLqM3iK0NpQlOlKgAt5jiY="
+    },
+    {
+      "receiptId": "c9b5b951-4e0a-4c12-bc80-4d09b692cf1e",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEe7fWO5qbPcpT7uNhjK2CWFqbanHA\nNM8ILWDeu4YiarqMnouGdahLpO7kCiOL/+taqyIJLzJ3gWrJQCqx94hPmQ==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:28:50.814Z",
+      "verifierSignature": "MEUCIBV2z9PpBYiaxBbByQh9UsYkkbPCt9Q03aYWD/UXd+CUAiEA6Cbsu0XMH94q6F0XnHcaf2k7Hu7XLKAsryhSwjxJXbQ="
+    },
+    {
+      "receiptId": "60369276-0fa4-4d4d-b854-12dd113f8f61",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDfMbcFJsSq77RnnEnbUTn9KN91DD\n+etavZjDZDs+WTsKrlkzCZ6laALbl5NtDbkTM5MNdtjH7EU3kttOiKk71Q==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:32:29.312Z",
+      "verifierSignature": "MEUCICXiPQEnsyzFKyMT4r2tarA1eg6oe4SNa4uyg0aYR/UrAiEA37Og30eYVHRT20aWfaIzKW2PQH5J4Mr/7WvRsFN6Cl4="
+    },
+    {
+      "receiptId": "a736e663-1341-4ca9-bf4b-43580f916fc1",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVojgDd+R38KFeyBfUqAplqQsaJi4\ncPdnUf8kfyIpsBINd4zB0H64Vdf8FNFOOyE697dmL+osXq5ckpLS/16b4w==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:43:30.419Z",
+      "verifierSignature": "MEQCIE28bB0f+j7Jyr440/qTD7nNpsNfwA47VfKArBZfYbuvAiA6yTPyuqwVuoCo3j2wAt3M7IEiwVUtqV/kL1XIYZZPyQ=="
+    },
+    {
+      "receiptId": "e659f4a6-a607-40a4-9898-db644111b161",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8Aqfhe9l0Bkhf6Ilm+rEdvkSzPiG\nL661dJkjmEjLKYy65I1NsOaACS6AH+XIYYO9ErER9JIF6vc9SQYX7BU8JA==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:48:46.345Z",
+      "verifierSignature": "MEQCIDd6g+fKOyhuGvU05U4vlv05wHhBg3sM4NeBsmC7RTy2AiBKdQbaOPnn6GQrmK1WDteqStuaNGMqtXWsNYwhOvB+EQ=="
+    },
+    {
+      "receiptId": "0689ea27-bbf2-4d4a-80de-b36fbcdb2f9a",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvliaI8SYu3JsF5FGnAL2Hk2WsOIC\nAw9W59LfalTuulfR9ZOOzwV4mZ9OVcP9R6m7lcmNwXP13tAL2ykueTirKQ==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T17:56:58.206Z",
+      "verifierSignature": "MEQCIHtDaMb81axN9g0I2jtIBWr+k6zq4bEEayofl28B/VDnAiAWk3m1vwghg/tIYCaw19aod5CWC3bTWlUrngJo7Cjd7Q=="
+    },
+    {
+      "receiptId": "f373ace1-0105-4947-856e-5189a368870a",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEuHP8RiHGZzbfq2GVfiuTTnAx1lgf\nE8X1ilQkIAXUMOcdbRUPj8SQsTKa16qSWhhxCE9zHNmW2l7vqReD+irNag==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T18:05:49.812Z",
+      "verifierSignature": "MEQCIECgGicqkOrVOFsUdA8daZRZARaEgQQTDt8nuK2wctNnAiBBDUaTLcL0lSb31TD1Tio/xRU+pNuIfbysgjDn2tYbDQ=="
+    },
+    {
+      "receiptId": "aea9ed79-0305-44d2-a6b4-50651a3844cf",
+      "verifierId": "verifier-door-1",
+      "credentialId": "03e1685e-f72d-48ad-bb71-5baaed3d6854",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKguFXD3CHoYECgFIVruuU+S0hEnS\n+eV/mINLDEuz287h7tWObER7l2IXMiksOD/kkOX/p428r4mSKolETzpWZA==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-05T18:20:50.293Z",
+      "verifierSignature": "MEUCIDGGXG/kv5Njy0/oYZpvMzl+xkPpPOYCpKOydQ9Ua1l7AiEAz/9yu3dYdDHsCCrN5eCL98zH+YtrvieD09cnGf8arHw="
+    },
+    {
+      "receiptId": "01023e0c-667c-4f5a-953c-3b99f4dbc228",
+      "verifierId": "verifier-door-1",
+      "credentialId": "ee4a78bf-ef4a-4795-b13c-a27ca1cd4837",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVT7OkcsiNCPR0lJjjQClQqzJtVV9\nxn299lxZx7dfjZg34ac2XFxtr3vsB+JhdFVkjaq/NL8vbPe8Ws8g1hxhyA==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Request failed with status code 500",
+      "timestamp": "2026-04-06T17:54:34.823Z",
+      "verifierSignature": "MEYCIQCeBHhlnllwFxUZlK8bqzc+D0rzNIkgyolslDbMrTKHOgIhAKYBXTPdRGag1E6Hvhoe2glfhgH6RWIIzCgJHpTsdlBM"
+    },
+    {
+      "receiptId": "8c946e2b-a6e4-4e84-8120-70362e9b1015",
+      "verifierId": "verifier-door-1",
+      "credentialId": "ee4a78bf-ef4a-4795-b13c-a27ca1cd4837",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7dvhuPNo/soJezAlfHh364mvbi8S\nT3Ekh7+pKV8pPgsTfX7QWeA6ghA2uUX04ggSOsINO/xg2bNo1jjOL0ip/Q==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Request failed with status code 500",
+      "timestamp": "2026-04-06T18:02:17.348Z",
+      "verifierSignature": "MEQCIH+su6iVm2M4Wnz+pH0Hlj6MLGcs3DwGxXBFJeIqDDo3AiA+w3wqwesOWhIpUOCQKsPENSBlrT8MSG0WzessFF+ffQ=="
+    },
+    {
+      "receiptId": "59685704-245a-4906-ad05-b33148c0aa78",
+      "verifierId": "verifier-door-1",
+      "credentialId": "ee4a78bf-ef4a-4795-b13c-a27ca1cd4837",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKG1ZuwjqOS/O980xai+IgdC/yd1N\nzKRX+A51cq1tYvvjt7GsGvsYv2At2jy2/oGNbYBRc07dxyTNWtV2GJScgQ==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Invalid issuer signature",
+      "timestamp": "2026-04-06T18:17:29.437Z",
+      "verifierSignature": "MEYCIQDLcNgAZ+sap/LskZgp/lvnN5CpXr17Lry3PqDHA/ZILgIhALbgOrn9WKrRdTKgOmxhFg7TrwO+4vqeiUxaADN5Jja5"
+    },
+    {
+      "receiptId": "4ac4f356-f4eb-451f-961a-697778ff09c0",
+      "verifierId": "verifier-door-1",
+      "credentialId": "87883062-c6bb-4597-bac8-eaf95ff5dec1",
+      "resourceId": "library-door-1",
+      "ephemeralKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEuoOUr47HeCrHEiRPgFess5Z9N0H7\nhEAk1wUw1JiOErrKkJGcCeURlsUV1KoZsnkOmqvKbhkWC0vXUlt2PngLyA==\n-----END PUBLIC KEY-----\n",
+      "decision": "DENIED",
+      "reason": "Request failed with status code 500",
+      "timestamp": "2026-04-07T08:52:58.046Z",
+      "verifierSignature": "MEUCIBy/LI2uXoNj1vrX+iyq5Na3MvKtNkYZld1Vco9crzafAiEA99rEObqRU3YECnp/acfWiodDK3LQ76PNIk1uTL4pVxU="
+    }
+  ]
+}

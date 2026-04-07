@@ -1,0 +1,244 @@
+{
+    "name": "SSIContract",
+    "version": "1.0.0",
+    "methods": [
+        {
+            "name": "registerIssuer",
+            "params": [
+                {
+                    "name": "issuerId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "publicKey",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "registerVerifier",
+            "params": [
+                {
+                    "name": "verifierId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "publicKey",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "endpoint",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "issueCredential",
+            "params": [
+                {
+                    "name": "credentialId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "issuerId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "role",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "level",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "revokeCredential",
+            "params": [
+                {
+                    "name": "credentialId",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "queryCredentialStatus",
+            "params": [
+                {
+                    "name": "credentialId",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": [
+                {
+                    "name": "output",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "upsertPolicy",
+            "params": [
+                {
+                    "name": "resourceId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "requiredRole",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "requiredLevel",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "getPolicy",
+            "params": [
+                {
+                    "name": "resourceId",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": [
+                {
+                    "name": "output",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "submitLogRoot",
+            "params": [
+                {
+                    "name": "verifierId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "batchId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "merkleRoot",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "timestamp",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": []
+        },
+        {
+            "name": "getLogRoot",
+            "params": [
+                {
+                    "name": "verifierId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "batchId",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "returns": [
+                {
+                    "name": "output",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "name": "BatchPin",
+            "params": [
+                {
+                    "name": "verifierId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "batchId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "merkleRoot",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "timestamp",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ]
+}
