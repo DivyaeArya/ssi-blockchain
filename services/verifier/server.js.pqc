@@ -1,0 +1,299 @@
+'use strict';
+
+/**
+ * VERIFIER SERVICE - Post-Quantum Cryptography Edition
+ *
+ * PQC Changes (liboqs-node):
+ *  - EC P-256 keypair (receipt signing)     → Dilithium3 (ML-DSA-65)
+ *  - EC P-256 ephemeral key (PoP)           → Falcon-512
+ *    (Falcon is compact & fast; ideal for short-lived ephemeral keys)
+ *  - Issuer sig verification (RSA → Dilithium3) via issuer's /public-key
+ *  - Ephemeral sig verification             → Falcon-512 verify
+ *
+ * Identity encryption: now expects the ML-KEM-512 envelope from the Holder
+ * (issuer.js /deanonymize documents the format).
+ *
+ * Install deps:
+ *   npm install express axios uuid merkletreejs dotenv liboqs-node
+ */
+
+const express  = require('express');
+const axios    = require('axios');
+const crypto   = require('crypto');
+const { v4: uuidv4 }  = require('uuid');
+const { MerkleTree }  = require('merkletreejs');
+const oqs      = require('liboqs-node');
+
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+
+// ─── Env ──────────────────────────────────────────────────────────────────────
+const FF       = process.env.FIREFLY_URL;
+const IID      = process.env.FIREFLY_INTERFACE_ID;
+const CH       = process.env.FABRIC_CHANNEL;
+const CC       = process.env.FABRIC_CHAINCODE;
+const VID      = process.env.VERIFIER_ID;
+const ISSUER   = process.env.ISSUER_URL;
+const CENTRE   = process.env.CENTRE_URL;
+const BATCH_MS = parseInt(process.env.BATCH_WINDOW_MS);
+
+// ─── SHA-256 helper for Merkle tree (unchanged — SHA-256 is QR for hashing) ──
+const SHA256 = (data) => crypto.createHash('sha256').update(data).digest();
+
+// ─── PQC Key Generation ───────────────────────────────────────────────────────
+
+/**
+ * Dilithium3 (ML-DSA-65, FIPS 204)
+ * Used for signing verifier receipts — replaces EC P-256.
+ */
+const receiptSig = new oqs.Signature('Dilithium3');
+receiptSig.generateKeypair();
+const receiptPrivKey = receiptSig.exportSecretKey();
+const receiptPubKey  = receiptSig.exportPublicKey();
+
+/**
+ * Falcon-512 — ephemeral proof-of-possession keys.
+ * Falcon has much smaller signatures than Dilithium (~660 bytes vs ~3.3 KB),
+ * making it well-suited for short-lived ephemeral keys embedded in proofs.
+ *
+ * NOTE: The Holder generates its own Falcon-512 ephemeral keypair per
+ * verification request and sends:
+ *   proof.ephemeralPublicKey  → base64 Falcon-512 public key
+ *   proof.ephemeralSignature  → base64 Falcon-512 signature over proof payload
+ */
+console.log('\n🔐 PQC Keys Generated');
+console.log(`   Receipt Sign : Dilithium3  | pubKey ${receiptPubKey.length} bytes`);
+console.log(`   Ephemeral    : Falcon-512  (generated per-request by Holder)`);
+
+// ─── FireFly Helpers ──────────────────────────────────────────────────────────
+async function query(method, input) {
+    const res = await axios.post(`${FF}/api/v1/contracts/query`, {
+        interface: IID,
+        location: { channel: CH, chaincode: CC },
+        method: { name: method },
+        input,
+    });
+    return res.data;
+}
+
+async function invoke(method, input) {
+    const res = await axios.post(`${FF}/api/v1/contracts/invoke`, {
+        interface: IID,
+        location: { channel: CH, chaincode: CC },
+        method: { name: method },
+        input,
+    });
+    return res.data;
+}
+
+// ─── Local log store ──────────────────────────────────────────────────────────
+let localLogs = [];
+
+// ─── /verify ─────────────────────────────────────────────────────────────────
+app.post('/verify', async (req, res) => {
+    const proof = req.body;
+    let decision = 'DENIED';
+    let reason   = '';
+
+    try {
+        // ── Step 1: Fetch issuer PQC public keys ──────────────────────────────
+        const issuerKeyRes  = await axios.get(`${ISSUER}/public-key`);
+        const issuerSigPub  = Buffer.from(issuerKeyRes.data.sigPublicKey, 'base64');
+        // issuerKeyRes.data.sigAlgorithm should equal 'Dilithium3'
+
+        // ── Step 2: Verify issuer Dilithium3 signature on credential ──────────
+        const sigPayload = JSON.stringify({
+            credentialId: proof.credentialId,
+            issuerId:     proof.issuerId,
+            role:         proof.role,
+            level:        proof.level,
+        });
+
+        /**
+         * PQC VERIFY with Dilithium3.
+         * oqs.Signature.verify(message, signature, publicKey) → boolean
+         */
+        const verifier = new oqs.Signature('Dilithium3');
+        const sigValid  = verifier.verify(
+            Buffer.from(sigPayload),
+            Buffer.from(proof.issuerSignature, 'base64'),
+            issuerSigPub
+        );
+        if (!sigValid) {
+            reason = 'Invalid issuer Dilithium3 signature';
+            throw new Error(reason);
+        }
+
+        // ── Step 3: Check credential status on-chain ──────────────────────────
+        const credData = await query('queryCredentialStatus', { credentialId: proof.credentialId });
+        const cred     = typeof credData === 'string' ? JSON.parse(credData) : credData;
+        if (cred.status !== 'active') {
+            reason = 'Credential is revoked';
+            throw new Error(reason);
+        }
+
+        // ── Step 4: Fetch access policy ───────────────────────────────────────
+        const policyData = await query('getPolicy', { resourceId: proof.resourceId });
+        const policy     = typeof policyData === 'string' ? JSON.parse(policyData) : policyData;
+
+        // ── Step 5: Role and level check ──────────────────────────────────────
+        if (proof.role !== policy.requiredRole) {
+            reason = `Role mismatch: need ${policy.requiredRole}`;
+            throw new Error(reason);
+        }
+        if (proof.level < policy.requiredLevel) {
+            reason = `Insufficient level: need ${policy.requiredLevel}`;
+            throw new Error(reason);
+        }
+
+        // ── Step 6: Verify ephemeral Falcon-512 signature (PoP) ───────────────
+        /**
+         * The Holder must generate a Falcon-512 ephemeral keypair per request:
+         *
+         *   const epSig  = new oqs.Signature('Falcon-512');
+         *   epSig.generateKeypair();
+         *   const epPub  = epSig.exportPublicKey().toString('base64');
+         *   const epPriv = epSig.exportSecretKey();
+         *
+         *   const payloadWithoutSig = { ...proof };  // before adding ephemeralSignature
+         *   proof.ephemeralPublicKey = epPub;
+         *   const epSigBuf = epSig.sign(Buffer.from(JSON.stringify(payloadWithoutSig)));
+         *   proof.ephemeralSignature = epSigBuf.toString('base64');
+         */
+        const { ephemeralSignature, ...payloadWithoutSig } = proof;
+        const epVerifier = new oqs.Signature('Falcon-512');
+        const epValid    = epVerifier.verify(
+            Buffer.from(JSON.stringify(payloadWithoutSig)),
+            Buffer.from(ephemeralSignature, 'base64'),
+            Buffer.from(proof.ephemeralPublicKey, 'base64')
+        );
+        if (!epValid) {
+            reason = 'Invalid ephemeral Falcon-512 signature';
+            throw new Error(reason);
+        }
+
+        decision = 'GRANTED';
+        reason   = 'All PQC checks passed';
+
+    } catch (e) {
+        if (!reason) reason = e.message;
+    }
+
+    // ── Step 7: Build signed receipt (Dilithium3) ─────────────────────────────
+    const receipt = {
+        receiptId:   uuidv4(),
+        verifierId:  VID,
+        credentialId: proof.credentialId,
+        resourceId:  proof.resourceId,
+        ephemeralKey: proof.ephemeralPublicKey,
+        decision,
+        reason,
+        timestamp:   new Date().toISOString(),
+    };
+
+    /**
+     * Sign receipt with Dilithium3 (replaces EC P-256 createSign).
+     */
+    const rSigBuf = receiptSig.sign(Buffer.from(JSON.stringify(receipt)));
+    receipt.verifierSignature = rSigBuf.toString('base64');
+    receipt.verifierSigAlgo   = 'Dilithium3';
+
+    // ── Step 8: Store log entry locally ───────────────────────────────────────
+    const logEntry = {
+        logId:             uuidv4(),
+        receiptId:    receipt.receiptId,
+        timestamp:         receipt.timestamp,
+        resourceId:        proof.resourceId,
+        ephemeralKey:      proof.ephemeralPublicKey,
+        result:            decision,
+        proofHash:         crypto.createHash('sha256')
+                               .update(JSON.stringify(proof)).digest('hex'),
+        receiptSignature:  receipt.verifierSignature,
+        encryptedIdentity: proof.encryptedIdentity, // ML-KEM-512 envelope from Holder
+    };
+    localLogs.push(logEntry);
+
+    console.log(`\n🔎 VERIFICATION: ${decision} | ${proof.credentialId}`);
+    res.json({ decision, reason, receipt });
+});
+
+// ─── Batch Submission ─────────────────────────────────────────────────────────
+async function submitBatch() {
+    if (localLogs.length === 0) return;
+
+    const batchLogs = [...localLogs];
+    localLogs = [];
+    const batchId = uuidv4();
+    const now     = new Date().toISOString();
+
+    // SHA-256 Merkle tree (unchanged — SHA-256 is quantum-resistant for hashing)
+    const leaves = batchLogs.map(log => SHA256(JSON.stringify(log)));
+    const tree   = new MerkleTree(leaves, SHA256);
+    const root   = tree.getRoot().toString('hex');
+
+    console.log(`\n📦 Packaging batch ${batchId}...`);
+    console.log(`   Merkle Root : ${root}`);
+    console.log(`   Logs        : ${batchLogs.length}`);
+
+    try {
+        const response = await axios.post(`${FF}/api/v1/contracts/invoke`, {
+            location: {
+                channel:   'firefly',
+                chaincode: 'ssi-contract',
+            },
+            method: {
+                name: 'submitLogRoot',
+                params: [
+                    { name: 'verifierId',  schema: { type: 'string' } },
+                    { name: 'batchId',     schema: { type: 'string' } },
+                    { name: 'merkleRoot',  schema: { type: 'string' } },
+                    { name: 'timestamp',   schema: { type: 'string' } },
+                ],
+            },
+            input: {
+                verifierId:  VID,
+                batchId,
+                merkleRoot:  root,
+                timelog:     now,
+            },
+            // Off-chain delivery to Centre via FireFly private messaging
+            message: {
+                header: { tag: 'log-batch' },
+                group: {
+                    members: [{ identity: 'org_0e95ec' }],
+                },
+                data: [{
+                    value: {
+                        batchId,
+                        merkleRoot: root,
+                        logs:       batchLogs,
+                        verifierId: VID,
+                        timestamp:  now,
+                    },
+                }],
+            },
+        });
+
+        console.log(`✅ Batch ${batchId} pinned on-chain and delivered to Centre.`);
+        console.log(`   TX ID: ${response.data.id}`);
+
+    } catch (err) {
+        console.error('❌ Batch Submission Failed!');
+        console.error(err.response?.data?.error || err.message);
+        // Put logs back so they aren't lost
+        localLogs = [...batchLogs, ...localLogs];
+    }
+}
+
+setInterval(submitBatch, BATCH_MS);
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+app.listen(process.env.PORT, () => {
+    console.log(`\n🚀 Verifier Node (PQC) running on port ${process.env.PORT}`);
+    console.log(`   Verifier ID    : ${VID}`);
+    console.log(`   Receipt Sig    : Dilithium3 (ML-DSA-65)`);
+    console.log(`   Ephemeral Sig  : Falcon-512 (Holder-generated)`);
+    console.log(`   Batch window   : ${BATCH_MS}ms`);
+});

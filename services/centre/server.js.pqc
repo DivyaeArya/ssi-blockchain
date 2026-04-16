@@ -1,0 +1,284 @@
+'use strict';
+
+/**
+ * CENTRE (AUDIT) NODE - Post-Quantum Cryptography Edition
+ *
+ * PQC Changes (liboqs-node):
+ *  - Receipt signature verification: EC P-256 → Dilithium3 (ML-DSA-65)
+ *    The Centre now verifies each log entry's receiptSignature using the
+ *    Verifier's Dilithium3 public key (fetched from a registry or config).
+ *  - Deanonymize relay: forwards the ML-KEM-512 envelope to the Issuer
+ *    (no Centre-side crypto change needed — Centre just proxies the call).
+ *  - Merkle tree audit: SHA-256 (unchanged — QR for hashing).
+ *
+ * NEW: Per-log Dilithium3 signature audit
+ *  Every log entry batch now has its individual receiptSignature entries
+ *  verified before being marked as trusted.
+ *
+ * Install deps:
+ *   npm install express axios merkletreejs dotenv liboqs-node
+ */
+
+const express  = require('express');
+const axios    = require('axios');
+const crypto   = require('crypto');
+const { MerkleTree } = require('merkletreejs');
+const oqs      = require('liboqs-node');
+
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+
+// ─── Env ──────────────────────────────────────────────────────────────────────
+const FF         = process.env.FIREFLY_URL;
+const CH         = process.env.FABRIC_CHANNEL;
+const CC         = process.env.FABRIC_CHAINCODE;
+const IID        = process.env.FIREFLY_INTERFACE_ID;
+const ISSUER_URL = process.env.ISSUER_URL || 'http://localhost:3001';
+
+/**
+ * VERIFIER_PUBLIC_KEYS: a map of verifierId → base64 Dilithium3 public key.
+ *
+ * In production, populate this from your verifier registry or a secure
+ * config store. Here we load from env vars named like:
+ *   VERIFIER_PUBKEY_<verifierId>=<base64 dilithium3 pubkey>
+ *
+ * You could also fetch from a /public-key endpoint on each verifier.
+ */
+const VERIFIER_PUBLIC_KEYS = {};
+Object.keys(process.env)
+    .filter(k => k.startsWith('VERIFIER_PUBKEY_'))
+    .forEach(k => {
+        const vid = k.replace('VERIFIER_PUBKEY_', '');
+        VERIFIER_PUBLIC_KEYS[vid] = Buffer.from(process.env[k], 'base64');
+        console.log(`📋 Loaded Dilithium3 pubkey for verifier: ${vid}`);
+    });
+
+// ─── SHA-256 for Merkle tree ──────────────────────────────────────────────────
+const SHA256 = (data) => crypto.createHash('sha256').update(data).digest();
+
+// ─── In-memory audit log store ────────────────────────────────────────────────
+const globalLogs = {};
+
+// ─── FireFly Helper ───────────────────────────────────────────────────────────
+async function query(method, input) {
+    const res = await axios.post(`${FF}/api/v1/contracts/query`, {
+        interface: IID,
+        location: { channel: CH, chaincode: CC },
+        method: { name: method },
+        input,
+    });
+    return res.data;
+}
+
+// ─── PQC Receipt Signature Verifier ──────────────────────────────────────────
+/**
+ * verifyReceiptSignatures
+ *
+ * For each log entry in the batch, verify its Dilithium3 receiptSignature.
+ * The signature covers the receipt object (without the verifierSignature field).
+ *
+ * Returns: { allValid: boolean, failures: string[] }
+ */
+function verifyReceiptSignatures(logs, verifierId) {
+    const pubKey = VERIFIER_PUBLIC_KEYS[verifierId];
+    if (!pubKey) {
+        console.warn(`⚠️  No Dilithium3 pubkey registered for verifier ${verifierId}. Skipping receipt sig check.`);
+        return { allValid: true, failures: [], skipped: true };
+    }
+
+    const verifier = new oqs.Signature('Dilithium3');
+    const failures = [];
+
+    for (const log of logs) {
+        if (!log.receiptSignature) {
+            failures.push(`${log.logId}: missing receiptSignature`);
+            continue;
+        }
+
+        /**
+         * The Verifier signed the receipt object (which does NOT contain
+         * receiptSignature itself). We rebuild the signable portion:
+         * all fields of the receipt that the Verifier signed, which maps
+         * to the receipt object built in verifier-server.js before signing.
+         *
+         * This is: { receiptId, verifierId, credentialId, resourceId,
+         *             ephemeralKey, decision, reason, timestamp }
+         *
+         * Since we only store the log (not the full receipt object), we
+         * reconstruct the signable fields from what we have in the log.
+         */
+        const signableReceipt = {
+            // These fields must match what verifier-server.js puts in `receipt`
+            receiptId:    log.receiptId,       // receiptid
+                                            // adapt if you store receiptId separately
+            verifierId,
+            credentialId: log.credentialId || '',
+            resourceId:   log.resourceId,
+            ephemeralKey: log.ephemeralKey,
+            decision:     log.result,
+            reason:       log.reason || '',
+            timestamp:    log.timestamp,
+        };
+
+        try {
+            const valid = verifier.verify(
+                Buffer.from(JSON.stringify(signableReceipt)),
+                Buffer.from(log.receiptSignature, 'base64'),
+                pubKey
+            );
+            if (!valid) {
+                failures.push(`${log.logId}: Dilithium3 signature INVALID`);
+            }
+        } catch (e) {
+            failures.push(`${log.logId}: verify error — ${e.message}`);
+        }
+    }
+
+    return { allValid: failures.length === 0, failures };
+}
+
+// ─── /receive-batch ───────────────────────────────────────────────────────────
+app.post('/receive-batch', async (req, res) => {
+    console.log('\n--- 📥 BATCH RECEIVED AT CENTRE ---');
+
+    // 1. Unwrap FireFly private message envelope
+    let payload = req.body;
+    if (req.body.data && req.body.data[0] && req.body.data[0].value) {
+        payload = req.body.data[0].value;
+        console.log('📦 Unwrapped FireFly Private Message');
+    }
+
+    const { batchId, merkleRoot, logs, verifierId } = payload;
+
+    // Heartbeat check
+    if (!batchId) {
+        console.log('⚠️ Ignoring empty heartbeat message.');
+        return res.status(200).send('OK');
+    }
+
+    console.log(`🆔 Batch: ${batchId} | From: ${verifierId}`);
+
+    try {
+        // 2. Fetch on-chain Merkle root for this batch
+        const rootData    = await query('getLogRoot', { verifierId, batchId });
+        const parsed      = typeof rootData === 'string' ? JSON.parse(rootData) : rootData;
+        const onChainRoot = parsed.merkleRoot;
+
+        // 3. Recompute Merkle root from received logs
+        const leaves       = logs.map(log => SHA256(JSON.stringify(log)));
+        const tree         = new MerkleTree(leaves, SHA256);
+        const computedRoot = tree.getRoot().toString('hex');
+
+        // 4. Merkle audit: compare computed vs on-chain vs reported
+        const merkleVerified = (computedRoot === onChainRoot && merkleRoot === onChainRoot);
+
+        if (!merkleVerified) {
+            console.warn('⚠️  ALERT: MERKLE ROOT MISMATCH! POSSIBLE TAMPERING.');
+            console.warn(`   On-Chain : ${onChainRoot}`);
+            console.warn(`   Computed : ${computedRoot}`);
+            console.warn(`   Reported : ${merkleRoot}`);
+        } else {
+            console.log('✅ MERKLE AUDIT PASSED: Logs match the blockchain anchor.');
+        }
+
+        // 5. PQC Receipt Signature Audit (NEW)
+        //    Verify each log's Dilithium3 receiptSignature
+        const receiptAudit = verifyReceiptSignatures(logs, verifierId);
+        if (receiptAudit.skipped) {
+            console.warn('⚠️  Receipt signature check skipped (no pubkey registered).');
+        } else if (!receiptAudit.allValid) {
+            console.warn('⚠️  RECEIPT SIGNATURE FAILURES:');
+            receiptAudit.failures.forEach(f => console.warn(`   → ${f}`));
+        } else {
+            console.log(`✅ RECEIPT SIG AUDIT PASSED: All ${logs.length} Dilithium3 signatures valid.`);
+        }
+
+        const fullyVerified = merkleVerified && (receiptAudit.skipped || receiptAudit.allValid);
+
+        // 6. Store for auditing / UI
+        globalLogs[batchId] = {
+            verifierId,
+            merkleRoot,
+            onChainRoot,
+            computedRoot,
+            merkleVerified,
+            receiptSigVerified: receiptAudit.allValid,
+            receiptSigFailures: receiptAudit.failures,
+            verified:           fullyVerified,
+            logs,
+            receivedAt:         new Date().toISOString(),
+        };
+
+        res.status(200).json({
+            received:           true,
+            verified:           fullyVerified,
+            merkleVerified,
+            receiptSigVerified: receiptAudit.allValid,
+            batchId,
+        });
+
+    } catch (e) {
+        console.error('❌ Verification Failed:', e.message);
+        res.status(500).json({ error: 'Audit failed', details: e.message });
+    }
+});
+
+// ─── Log Endpoints ────────────────────────────────────────────────────────────
+app.get('/logs', (req, res) => {
+    res.json(globalLogs);
+});
+
+app.get('/logs/:batchId', (req, res) => {
+    const batch = globalLogs[req.params.batchId];
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+    res.json(batch);
+});
+
+// ─── Deanonymize ──────────────────────────────────────────────────────────────
+/**
+ * /deanonymize — proxy to Issuer's ML-KEM-512 deanonymize endpoint.
+ *
+ * The encryptedIdentity field in each log is now an ML-KEM-512 envelope:
+ * { cipherText, iv, tag, payload } (all base64).
+ * The Centre relays it to the Issuer which holds the KEM secret key.
+ */
+app.post('/deanonymize', async (req, res) => {
+    const { batchId, logId } = req.body;
+    const batch = globalLogs[batchId];
+
+    if (!batch) return res.status(404).json({ error: 'Batch not found' });
+
+    const log = batch.logs.find(l => l.logId === logId);
+    if (!log || !log.encryptedIdentity) {
+        return res.status(404).json({ error: 'Encrypted identity not found' });
+    }
+
+    try {
+        // Forward the full ML-KEM-512 envelope to Issuer for decapsulation
+        const result = await axios.post(`${ISSUER_URL}/deanonymize`, {
+            encryptedIdentity: log.encryptedIdentity, // { cipherText, iv, tag, payload }
+        });
+
+        res.json({
+            logId,
+            batchId,
+            identity:  result.data.identity,
+            timestamp: log.timestamp,
+        });
+    } catch (e) {
+        console.error('Deanonymize relay failed:', e.message);
+        res.status(500).json({ error: 'Decryption failed', details: e.message });
+    }
+});
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3003;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Centre Node (PQC) running on port ${PORT}`);
+    console.log(`   Auditing channel   : ${CH}`);
+    console.log(`   Merkle audit       : SHA-256 (quantum-resistant for hashing)`);
+    console.log(`   Receipt sig audit  : Dilithium3 (ML-DSA-65)`);
+    console.log(`   Identity decrypt   : ML-KEM-512 via Issuer proxy`);
+});

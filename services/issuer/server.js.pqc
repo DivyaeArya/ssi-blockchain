@@ -1,0 +1,282 @@
+'use strict';
+
+/**
+ * ISSUER SERVICE - Post-Quantum Cryptography Edition
+ *
+ * PQC Changes (liboqs-node):
+ *  - RSA-2048 keypair       → ML-KEM-512 KEM keypair  (identity encryption)
+ *  - RSA-OAEP decryption    → ML-KEM-512 Decapsulate + AES-256-GCM decrypt
+ *  - SHA256withRSA signing  → Dilithium3 (ML-DSA-65) signing
+ *  - SHA256withRSA verify   → Dilithium3 verify (used by Verifier)
+ *
+ * Other components (FireFly invoke/query, Express routing) are unchanged.
+ *
+ * Install deps:
+ *   npm install express axios uuid dotenv liboqs-node
+ *
+ * liboqs-node requires native build tools + liboqs C library installed.
+ * See: https://github.com/open-quantum-safe/liboqs-node
+ */
+
+const express  = require('express');
+const axios    = require('axios');
+const crypto   = require('crypto');
+const { v4: uuidv4 } = require('uuid');
+const oqs      = require('liboqs-node'); // PQC primitives
+
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+
+// ─── Env ──────────────────────────────────────────────────────────────────────
+const FF       = process.env.FIREFLY_URL;
+const API_NAME = process.env.FIREFLY_API_NAME || 'ssi-api';
+const CH       = process.env.FABRIC_CHANNEL;
+const CC       = process.env.FABRIC_CHAINCODE;
+const ISS      = process.env.ISSUER_ID;
+const IID      = process.env.FIREFLY_INTERFACE_ID;
+
+// ─── PQC Key Generation ───────────────────────────────────────────────────────
+
+/**
+ * ML-KEM-512  (FIPS 203) — used for identity encryption/decryption.
+ * The issuer holds the KEM secret key; the public key is shared with
+ * Verifiers/Holders so they can encapsulate a symmetric key.
+ */
+const kem = new oqs.KeyEncapsulation('ML-KEM-512');
+kem.generateKeypair();
+const kemPublicKey  = kem.exportPublicKey();   // Buffer — share with clients
+const kemSecretKey  = kem.exportSecretKey();   // Buffer — keep secret
+
+/**
+ * Dilithium3  (ML-DSA-65, FIPS 204) — used for credential signing.
+ * Replaces RSA-2048 SHA256withRSA.  Security level ≈ AES-192.
+ */
+const sig = new oqs.Signature('Dilithium3');
+sig.generateKeypair();
+const dilPublicKey  = sig.exportPublicKey();   // Buffer — embed in credential
+const dilSecretKey  = sig.exportSecretKey();   // Buffer — kept in memory
+
+console.log('\n🔐 PQC Keys Generated');
+console.log(`   KEM  : ML-KEM-512   | pubKey ${kemPublicKey.length} bytes`);
+console.log(`   Sign : Dilithium3   | pubKey ${dilPublicKey.length} bytes`);
+
+// ─── FireFly Helpers ──────────────────────────────────────────────────────────
+async function invoke(method, input) {
+    const res = await axios.post(`${FF}/api/v1/contracts/invoke`, {
+        interface: IID,
+        location: { channel: CH, chaincode: CC },
+        method: { name: method },
+        input,
+    });
+    return res.data;
+}
+
+async function query(method, input) {
+    const res = await axios.post(`${FF}/api/v1/contracts/query`, {
+        interface: IID,
+        location: { channel: CH, chaincode: CC },
+        method: { name: method },
+        input,
+    });
+    return res.data;
+}
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+// Register issuer on-chain
+app.post('/register', async (req, res) => {
+    try {
+        // Store Dilithium public key on-chain so Verifiers can validate sigs.
+        // We base64-encode it since the chaincode expects a string field.
+        const result = await invoke('registerIssuer', {
+            issuerId:  ISS,
+            publicKey: dilPublicKey.toString('base64'),   // Dilithium3 pubkey
+            name:      'Org1 Issuer',
+        });
+
+        console.log(`\n✅ Issuer Registered: ${ISS}`);
+        res.json({ success: true, result });
+    } catch (e) {
+        console.error(`\n❌ Registration Failed: ${e.message}`);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Issue a credential
+app.post('/issue', async (req, res) => {
+    try {
+        const { userId, role, level, encryptedIdentity } = req.body;
+
+        if (!userId || !role || level === undefined || level === null) {
+            return res.status(400).json({ error: 'Missing fields' });
+        }
+
+        const credentialId = uuidv4();
+        const credential = {
+            credentialId,
+            issuerId:          ISS,
+            userId,
+            role,
+            level:             parseInt(level, 10),
+            encryptedIdentity,
+            issuedAt:          new Date().toISOString(),
+        };
+
+        // Payload to sign (same fields as before — only the signer changes)
+        const payloadToSign = JSON.stringify({
+            credentialId: credential.credentialId,
+            issuerId:     credential.issuerId,
+            role:         credential.role,
+            level:        credential.level,
+        });
+
+        /**
+         * PQC SIGN with Dilithium3 (replaces RSA createSign).
+         * oqs.Signature.sign() returns a Buffer containing the signature.
+         */
+        const sigBuf = sig.sign(Buffer.from(payloadToSign));
+        credential.issuerSignature = sigBuf.toString('base64');
+
+        // Also embed the Dilithium public key so Verifiers can self-verify
+        // without needing an extra /public-key round-trip.
+        credential.issuerPublicKey = dilPublicKey.toString('base64');
+
+        // Pin credential metadata on-chain via FireFly
+        await invoke('issueCredential', {
+            credentialId,
+            issuerId: ISS,
+            role,
+            level: String(level),
+        });
+
+        console.log(`\n📄 NEW CREDENTIAL ISSUED`);
+        console.log(`   ID:    ${credentialId}`);
+        console.log(`   User:  ${userId}`);
+        console.log(`   Role:  ${role} (Level ${level})`);
+        console.log(`   Algo:  Dilithium3`);
+        console.log(`   Time:  ${credential.issuedAt}`);
+
+        res.json({ success: true, credential });
+    } catch (e) {
+        console.error(`\n❌ Issuance Failed: ${e.message}`);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Revoke a credential
+app.post('/revoke', async (req, res) => {
+    try {
+        const { credentialId } = req.body;
+        if (!credentialId) {
+            return res.status(400).json({ error: 'Missing credentialId' });
+        }
+
+        await invoke('revokeCredential', { credentialId });
+
+        console.log(`\n🚫 CREDENTIAL REVOKED`);
+        console.log(`   ID:    ${credentialId}`);
+        console.log(`   Status: Inactive on-chain`);
+
+        res.json({ success: true, credentialId, status: 'revoked' });
+    } catch (e) {
+        console.error(`\n❌ Revocation Failed for ${req.body.credentialId}: ${e.message}`);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * Deanonymize: decrypt an identity that was encrypted by a Holder using
+ * ML-KEM-512 encapsulate + AES-256-GCM.
+ *
+ * Expected request body:
+ * {
+ *   "encryptedIdentity": {
+ *     "cipherText": "<base64 KEM ciphertext>",
+ *     "iv":         "<base64 AES-GCM nonce>",
+ *     "tag":        "<base64 AES-GCM auth tag>",
+ *     "payload":    "<base64 AES-GCM ciphertext>"
+ *   }
+ * }
+ *
+ * Holder-side encryption (for reference — runs in the client/holder service):
+ *   const kem = new oqs.KeyEncapsulation('ML-KEM-512');
+ *   const { cipherText, sharedSecret } = kem.encapsulate(issuerKemPublicKey);
+ *   // sharedSecret is 32 bytes → use as AES-256-GCM key
+ *   const iv      = crypto.randomBytes(12);
+ *   const cipher  = crypto.createCipheriv('aes-256-gcm', sharedSecret, iv);
+ *   const payload = Buffer.concat([cipher.update(identityString), cipher.final()]);
+ *   const tag     = cipher.getAuthTag();
+ *   // Send { cipherText, iv, tag, payload } all base64-encoded.
+ */
+app.post('/deanonymize', async (req, res) => {
+    try {
+        const enc = req.body.encryptedIdentity;
+        if (!enc || !enc.cipherText || !enc.iv || !enc.tag || !enc.payload) {
+            return res.status(400).json({ error: 'Malformed encryptedIdentity envelope' });
+        }
+
+        // 1. ML-KEM-512 Decapsulate → recover shared secret
+        const kemInstance = new oqs.KeyEncapsulation('ML-KEM-512', kemSecretKey);
+        const sharedSecret = kemInstance.decapsulate(Buffer.from(enc.cipherText, 'base64'));
+
+        // 2. AES-256-GCM decrypt with the recovered shared secret
+        const decipher = crypto.createDecipheriv(
+            'aes-256-gcm',
+            sharedSecret,
+            Buffer.from(enc.iv, 'base64')
+        );
+        decipher.setAuthTag(Buffer.from(enc.tag, 'base64'));
+        const identity = Buffer.concat([
+            decipher.update(Buffer.from(enc.payload, 'base64')),
+            decipher.final(),
+        ]).toString();
+
+        console.log(`\n🔍 DEANONYMIZATION REQUEST PROCESSED (ML-KEM-512 + AES-256-GCM)`);
+        res.json({ success: true, identity });
+    } catch (e) {
+        console.error('Deanonymize error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * /public-key — returns BOTH public keys so clients can:
+ *   - kemPublicKey  : encrypt identity blobs (ML-KEM-512 encapsulate)
+ *   - dilPublicKey  : verify credential signatures (Dilithium3 verify)
+ */
+app.get('/public-key', (req, res) => {
+    res.json({
+        issuerId:         ISS,
+        kemAlgorithm:     'ML-KEM-512',
+        sigAlgorithm:     'Dilithium3',
+        kemPublicKey:     kemPublicKey.toString('base64'),
+        sigPublicKey:     dilPublicKey.toString('base64'),
+    });
+});
+
+// Upsert access policy
+app.post('/policy', async (req, res) => {
+    try {
+        const { resourceId, requiredRole, requiredLevel } = req.body;
+        const result = await invoke('upsertPolicy', {
+            resourceId,
+            requiredRole,
+            requiredLevel: String(requiredLevel),
+        });
+
+        console.log(`\n⚖️  POLICY UPDATED: ${resourceId} (${requiredRole} Lvl ${requiredLevel})`);
+        res.json({ success: true, result });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+app.listen(process.env.PORT, () => {
+    console.log(`\n🚀 Issuer Service (PQC) running on port ${process.env.PORT}`);
+    console.log(`   Issuer ID  : ${ISS}`);
+    console.log(`   KEM        : ML-KEM-512`);
+    console.log(`   Signature  : Dilithium3 (ML-DSA-65)`);
+});
