@@ -12,6 +12,17 @@ app.use(express.json());
 // SHA256 Helper for Merkle Tree [cite: 1099]
 const SHA256 = (data) => crypto.createHash('sha256').update(data).digest();
 
+function stableStringify(value) {
+    if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(key =>
+            `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+}
+
 const FF = process.env.FIREFLY_URL; // http://localhost:5000 [cite: 1106]
 const CH = process.env.FABRIC_CHANNEL; // firefly [cite: 1109]
 const CC = process.env.FABRIC_CHAINCODE; // ssi-contract [cite: 1110]
@@ -30,6 +41,21 @@ async function query(method, input) {
         location: { channel: CH, chaincode: CC },
         method: { name: method },
         input,
+    });
+    return res.data;
+}
+
+async function queryLogRoot(verifierId, batchId) {
+    const res = await axios.post(`${FF}/api/v1/contracts/query`, {
+        location: { channel: CH, chaincode: CC },
+        method: {
+            name: 'getLogRoot',
+            params: [
+                { name: 'verifierId', schema: { type: 'string' } },
+                { name: 'batchId', schema: { type: 'string' } }
+            ]
+        },
+        input: { verifierId, batchId },
     });
     return res.data;
 }
@@ -59,12 +85,12 @@ app.post('/receive-batch', async (req, res) => {
 
     try {
         // 2. Fetch the On-Chain Root for this batch [cite: 1125-1128]
-        const rootData = await query('getLogRoot', { verifierId, batchId });
+        const rootData = await queryLogRoot(verifierId, batchId);
         const parsed = typeof rootData === 'string' ? JSON.parse(rootData) : rootData;
         const onChainRoot = parsed.merkleRoot;
 
         // 3. Recompute Merkle Root from received logs [cite: 1137-1143]
-        const leaves = logs.map(log => SHA256(JSON.stringify(log)));
+        const leaves = logs.map(log => SHA256(stableStringify(log)));
         const tree = new MerkleTree(leaves, SHA256);
         const computedRoot = tree.getRoot().toString('hex');
 

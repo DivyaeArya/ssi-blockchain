@@ -11,13 +11,24 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
+function stableStringify(value) {
+    if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(key =>
+            `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+}
+
 const FF = process.env.FIREFLY_URL;
 const IID = process.env.FIREFLY_INTERFACE_ID;
 const CH = process.env.FABRIC_CHANNEL;
 const CC = process.env.FABRIC_CHAINCODE;
 const VID = process.env.VERIFIER_ID;
 const ISSUER = process.env.ISSUER_URL;
-const CENTRE = process.env.CENTRE_URL;
+const RECIPIENT_ORG = process.env.RECIPIENT_ORG;
 const BATCH_MS = parseInt(process.env.BATCH_WINDOW_MS);
 
 // Verifier signing keypair
@@ -170,7 +181,7 @@ async function submitBatch() {
     const now = new Date().toISOString();
     
     // 1. Calculate Merkle Root
-    const leaves = batchLogs.map(log => SHA256(JSON.stringify(log)));
+    const leaves = batchLogs.map(log => SHA256(stableStringify(log)));
     const tree = new MerkleTree(leaves, SHA256);
     const root = tree.getRoot().toString('hex');
 
@@ -179,10 +190,10 @@ async function submitBatch() {
 
     try {
         /**
-         * 2. CONSOLIDATED CALL: "Pin" the logs to the blockchain
-         * This replaces BOTH your 'invoke' and your 'axios.post(/private)' calls.
+         * 2. Pin the Merkle root on-chain first. FireFly rejects user-provided
+         * contract params when a private message is pinned in the same request.
          */
-        const response = await axios.post(`${FF}/api/v1/contracts/invoke`, {
+        const invokeResponse = await axios.post(`${FF}/api/v1/contracts/invoke`, {
             location: { 
                 channel: 'firefly', 
                 chaincode: 'ssi-contract' 
@@ -195,7 +206,7 @@ async function submitBatch() {
                     { "name": "verifierId", "schema": { "type": "string" } },
                     { "name": "batchId", "schema": { "type": "string" } },
                     { "name": "merkleRoot", "schema": { "type": "string" } },
-                    { "name": "timestamp", "schema": { "type": "string" } }
+                    { "name": "timelog", "schema": { "type": "string" } }
                 ]
             },
 
@@ -205,28 +216,29 @@ async function submitBatch() {
                 batchId: batchId,
                 merkleRoot: root,
                 timelog: now
-            },
-
-            // Off-chain delivery: FireFly sends this privately to the Centre
-            message: {
-                header: { tag: 'log-batch' },
-                group: { 
-                    members: [{ identity: "org_0e95ec" }] // Recipient: Centre Node ID
-                },
-                data: [{
-                    value: { 
-                        batchId, 
-                        merkleRoot: root, 
-                        logs: batchLogs, 
-                        verifierId: VID, 
-                        timestamp: now
-                    }
-                }]
             }
         });
 
+        // 3. Send the raw logs privately to the Centre after the root is pinned.
+        const privateResponse = await axios.post(`${FF}/api/v1/messages/private`, {
+            header: { tag: 'log-batch' },
+            group: { 
+                members: [{ identity: RECIPIENT_ORG }] // Recipient: Centre org identity
+            },
+            data: [{
+                value: { 
+                    batchId, 
+                    merkleRoot: root, 
+                    logs: batchLogs, 
+                    verifierId: VID, 
+                    timestamp: now
+                }
+            }]
+        });
+
         console.log(`✅ Batch ${batchId} pinned on-chain and delivered to Centre.`);
-        console.log(`Transaction ID: ${response.data.id}`);
+        console.log(`Transaction ID: ${invokeResponse.data.tx}`);
+        console.log(`Private Message ID: ${privateResponse.data.header.id}`);
 
     } catch (err) {
         console.error("❌ Batch Submission Failed!");
